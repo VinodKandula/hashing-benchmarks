@@ -103,7 +103,8 @@ public class HashingBenchmark {
         for (int idx=0; idx<HashingBenchmark.DIST_SIZE; ++idx) {
             messages.MD5.reset();
             messages.MD5.update(messages.messages[idx]);
-            black.consume(messages.MD5.digest());
+            messages.MD5.digest(messages.digest);
+            black.consume(messages.digest);
         }
     }
 
@@ -115,7 +116,8 @@ public class HashingBenchmark {
         for (int idx=0; idx<HashingBenchmark.DIST_SIZE; ++idx) {
             messages.MD5_bc.reset();
             messages.MD5_bc.update(messages.messages[idx]);
-            black.consume(messages.MD5_bc.digest());
+            messages.MD5_bc.digest(messages.digest);
+            black.consume(messages.digest);
         }
     }
 
@@ -127,7 +129,8 @@ public class HashingBenchmark {
         for (int idx=0; idx<HashingBenchmark.DIST_SIZE; ++idx) {
             messages.MD5_sap.reset();
             messages.MD5_sap.update(messages.messages[idx]);
-            black.consume(messages.MD5_sap.digest());
+            messages.MD5_sap.digest(messages.digest);
+            black.consume(messages.digest);
         }
     }
 
@@ -137,7 +140,11 @@ public class HashingBenchmark {
         final HashingBenchmark.Messages messages, final Blackhole black
     ) {
         for (int idx=0; idx<HashingBenchmark.DIST_SIZE; ++idx) {
-            black.consume(Hashing.md5().hashBytes(messages.messages[idx]).asBytes());
+            Hashing
+                .md5()
+                .hashBytes(messages.messages[idx])
+                .writeBytesTo(messages.digest, 0, messages.digest.length);
+            black.consume(messages.digest);
         }
     }
     @State(Scope.Thread)
@@ -148,6 +155,7 @@ public class HashingBenchmark {
         public final MessageDigest MD5;
         public final MessageDigest MD5_bc;
         public final MessageDigest MD5_sap;
+        public final byte[] digest;
 
         public final byte[][] messages = new byte[HashingBenchmark.DIST_SIZE][];
 
@@ -160,6 +168,7 @@ public class HashingBenchmark {
                 this.MD5 = MessageDigest.getInstance("MD5");
                 this.MD5_bc = MessageDigest.getInstance("MD5", this.bouncy);
                 this.MD5_sap = MessageDigest.getInstance("MD5", this.saphir);
+                this.digest = new byte[this.MD5.getDigestLength()];
             } catch (final NoSuchAlgorithmException ex) {
                 throw new IllegalStateException(ex);
             }
